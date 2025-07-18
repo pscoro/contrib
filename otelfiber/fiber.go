@@ -120,8 +120,10 @@ func Middleware(opts ...Option) fiber.Handler {
 		keys, ok := keysLocal.([]string)
 		if ok && len(keys) > 0 {
 			for _, key := range keys {
-				c.RequestCtx().SetUserValue(key, ctx.Value(key))
-				c.Locals(key, ctx.Value(key))
+				if val := ctx.Value(key); val != nil {
+					c.RequestCtx().SetUserValue(key, val)
+					c.Locals(key, val)
+				}
 			}
 		}
 
@@ -163,8 +165,10 @@ func Middleware(opts ...Option) fiber.Handler {
 			keys, ok := keysLocal.([]string)
 			if ok && len(keys) > 0 {
 				for _, key := range keys {
-					c.RequestCtx().SetUserValue(key, ctx.Value(key))
-					c.Locals(key, ctx.Value(key))
+					if val := ctx.Value(key); val != nil {
+						c.RequestCtx().SetUserValue(key, val)
+						c.Locals(key, val)
+					}
 				}
 			}
 			cancel()
