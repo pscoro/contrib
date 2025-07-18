@@ -87,7 +87,7 @@ func Middleware(opts ...Option) fiber.Handler {
 		}
 
 		c.Locals(tracerKey, tracer)
-		savedCtx, cancel := context.WithCancel(c.Context())
+		savedCtx, cancel := context.WithCancel(c)
 
 		start := time.Now()
 
@@ -117,7 +117,7 @@ func Middleware(opts ...Option) fiber.Handler {
 		defer span.End()
 
 		// pass the span through userContext
-		c.SetContext(ctx)
+		c.Locals("context", ctx)
 
 		// serve the request to the next middleware
 		if err := c.Next(); err != nil {
@@ -149,7 +149,7 @@ func Middleware(opts ...Option) fiber.Handler {
 			httpServerRequestSize.Record(savedCtx, requestSize, metric.WithAttributes(responseMetricAttrs...))
 			httpServerResponseSize.Record(savedCtx, responseSize, metric.WithAttributes(responseMetricAttrs...))
 
-			c.SetContext(savedCtx)
+			c.Locals("context", savedCtx)
 			cancel()
 		}()
 
@@ -165,7 +165,7 @@ func Middleware(opts ...Option) fiber.Handler {
 
 		//Propagate tracing context as headers in outbound response
 		tracingHeaders := make(propagation.HeaderCarrier)
-		cfg.Propagators.Inject(c.Context(), tracingHeaders)
+		cfg.Propagators.Inject(c, tracingHeaders)
 		for _, headerKey := range tracingHeaders.Keys() {
 			c.Set(headerKey, tracingHeaders.Get(headerKey))
 		}
