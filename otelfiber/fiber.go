@@ -116,6 +116,15 @@ func Middleware(opts ...Option) fiber.Handler {
 		ctx, span := tracer.Start(ctx, spanName, opts...)
 		defer span.End()
 
+		keysLocal := c.Locals("keys")
+		keys, ok := keysLocal.([]string)
+		if ok && len(keys) > 0 {
+			for _, key := range keys {
+				c.RequestCtx().SetUserValue(key, ctx.Value(key))
+				c.Locals(key, ctx.Value(key))
+			}
+		}
+
 		// pass the span through userContext
 		c.Locals("context", ctx)
 
@@ -150,6 +159,14 @@ func Middleware(opts ...Option) fiber.Handler {
 			httpServerResponseSize.Record(savedCtx, responseSize, metric.WithAttributes(responseMetricAttrs...))
 
 			c.Locals("context", savedCtx)
+			keysLocal := c.Locals("keys")
+			keys, ok := keysLocal.([]string)
+			if ok && len(keys) > 0 {
+				for _, key := range keys {
+					c.RequestCtx().SetUserValue(key, ctx.Value(key))
+					c.Locals(key, ctx.Value(key))
+				}
+			}
 			cancel()
 		}()
 
